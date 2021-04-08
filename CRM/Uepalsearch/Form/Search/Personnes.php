@@ -69,10 +69,14 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
             r.id
           from
             civicrm_relationship r
-           where
-             r.contact_id_a = contact_a.id
-           and
-             r.is_active = 1
+          left outer join
+            civicrm_contact p on r.contact_id_b = p.id
+          left outer join
+            civicrm_value_paroisse_detail pd on pd.entity_id = p.id
+          where
+            r.contact_id_a = contact_a.id
+          and
+            r.is_active = 1
            $orgContactsFilter
            $relationshipFilter
         )
@@ -82,7 +86,24 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
   }
 
   private function getInspectionConsistoireParoisseFilter() {
+    $where = '';
 
+    $filter = CRM_Utils_Array::value('filter_inspection_consistoire_reforme', $this->_formValues);
+    if ($filter) {
+      $where = " and pd.inspection_consistoire_reforme = $filter ";
+    }
+
+    $filter = CRM_Utils_Array::value('filter_consistoire_lutherien', $this->_formValues);
+    if ($filter) {
+      $where = " and pd.consistoire_lutherien = $filter ";
+    }
+
+    $filter = CRM_Utils_Array::value('filter_paroisse', $this->_formValues);
+    if ($filter) {
+      $where = " and p.id = $filter ";
+    }
+
+    return $where;
   }
 
   private function getRelationshipFilter() {
@@ -196,5 +217,8 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
     return $rels;
   }
 
+  public function templateFile() {
+    return 'CRM/Contact/Form/Search/Custom.tpl';
+  }
 
 }
