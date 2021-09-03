@@ -2,26 +2,48 @@
 use CRM_Uepalsearch_ExtensionUtil as E;
 
 class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Custom_Base implements CRM_Contact_Form_Search_Interface {
+  private $relTypesParoisse;
+
+  public function __construct(&$formValues) {
+    $this->relTypesParoisse = $this->getNecessaryRelationships();
+
+    parent::__construct($formValues);
+  }
+
   public function buildForm(&$form) {
     CRM_Utils_System::setTitle('Rechercher les personnnes reliés à une inspection et/ou un consistoire et/ou une paroisse');
 
     $fields = [];
+    /*
     $fields[] = $this->addFieldRelations($form);
     $fields[] = $this->addFieldInspections($form);
     $fields[] = $this->addFieldConsistoires($form);
     $fields[] = $this->addFieldParoisses($form);
-
+    */
 
     $form->assign('elements', $fields);
   }
 
   public function &columns() {
     $columns = [
-      'Identifiant' => 'contact_id',
-      'Prénom' => 'first_name',
-      'Nom' => 'last_name',
-      'Adresse e-mail' => 'email',
+      'Inspection' => 'inspection',
+      'Consistoire' => 'consistoire',
+      'Paroisse' => 'paroisse',
+      'Nom' => 'nom',
     ];
+
+    foreach ($this->relTypesParoisse as $k => $v) {
+      $columns[$v] = "rel_$k";
+    }
+
+    $columns['Courriel'] = 'e.email';
+
+    $columns['Complément 1'] = 'a.supplemental_address_1';
+    $columns['Complément 2'] = 'a.supplemental_address_2';
+    $columns['Rue'] = 'a.street_address';
+    $columns['CP'] = 'a.postal_code';
+    $columns['Ville'] = 'a.city';
+
     return $columns;
   }
 
@@ -32,22 +54,40 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
   }
 
   public function select() {
-    $selectColumns = "
-      contact_a.id as contact_id,
-      contact_a.first_name,
-      contact_a.last_name,
-      e.email
+    $selectColumns = " distinct
+      inspec.organization_name inspection,
+      consist.organization_name consistoire,
+      par.organization_name paroisse,
+      contact_a.display_name as nom,
+      e.email,
+      a.*
     ";
+
+    $selectColumns .= $this->getSelectRelationships();
 
     return $selectColumns;
   }
 
   public function from() {
+    $relationshipFilter = implode(', ',array_keys($this->relTypesParoisse));
+
     $fromClause = "
       FROM
         civicrm_contact contact_a
+      INNER JOIN
+        civicrm_relationship r on r.contact_id_a = contact_a.id and r.relationship_type_id in ($relationshipFilter) and r.is_active = 1
+      INNER JOIN
+        civicrm_contact par on par.id = r.contact_id_b
+      INNER JOIN
+        civicrm_value_paroisse_detail pard on pard.entity_id = par.id
+      LEFT OUTER JOIN
+        civicrm_contact inspec on inspec.id = pard.inspection_consistoire_reforme
+      LEFT OUTER JOIN
+        civicrm_contact consist on consist.id = pard.consistoire_lutherien
       LEFT OUTER JOIN
         civicrm_email e ON e.contact_id = contact_a.id AND e.is_primary = 1
+      LEFT OUTER JOIN
+        civicrm_address a ON a.contact_id = contact_a.id AND a.is_primary = 1
     ";
 
     return $fromClause;
@@ -56,34 +96,16 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
   public function where($includeContactIDs = FALSE) {
     $params = [];
 
-    $orgContactsFilter = $this->getInspectionConsistoireParoisseFilter();
-    $relationshipFilter = $this->getRelationshipFilter();
-
     $where = "
         contact_a.is_deleted = 0
       and
         contact_a.contact_type = 'Individual'
-      and
-        exists (
-          select
-            r.id
-          from
-            civicrm_relationship r
-          left outer join
-            civicrm_contact p on r.contact_id_b = p.id
-          left outer join
-            civicrm_value_paroisse_detail pd on pd.entity_id = p.id
-          where
-            r.contact_id_a = contact_a.id
-          and
-            r.is_active = 1
-           $orgContactsFilter
-           $relationshipFilter
-        )
     ";
 
     return $this->whereClause($where, $params);
   }
+
+
 
   private function getInspectionConsistoireParoisseFilter() {
     $where = '';
@@ -217,8 +239,47 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
     return $rels;
   }
 
+  private function getNecessaryRelationships() {
+    $rels = [];
+
+    $config = new CRM_Uepalconfig_Config();
+
+    // membre elu	président	vice-président	trésorier	secrétaire	receveur	membre invité
+    $r = $config->getRelationshipType_estMembreEluDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
+    $r = $config->getRelationshipType_estPresidentDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
+    $r = $config->getRelationshipType_estVicePresidentDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
+    $r = $config->getRelationshipType_estTresorierDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
+    $r = $config->getRelationshipType_estSecretaireDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
+    $r = $config->getRelationshipType_estMembreInviteDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
+    return $rels;
+  }
+
+  private function getSelectRelationships() {
+    $col = '';
+
+    foreach ($this->relTypesParoisse as $k => $k) {
+      $col .= ", (select if(max(r_$k.id) is null, null, 'x') from civicrm_relationship r_$k where r_$k.relationship_type_id = $k and r_$k.is_active = 1 and r_$k.contact_id_a = contact_a.id and r_$k.contact_id_b = par.id) rel_$k";
+    }
+
+    return $col;
+  }
+
   public function templateFile() {
     return 'CRM/Contact/Form/Search/Custom.tpl';
   }
+
+
 
 }
