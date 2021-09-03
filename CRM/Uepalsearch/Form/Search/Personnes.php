@@ -245,6 +245,9 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
     $config = new CRM_Uepalconfig_Config();
 
     // membre elu	président	vice-président	trésorier	secrétaire	receveur	membre invité
+    $r = $config->getRelationshipType_estMembreDeDroitDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
     $r = $config->getRelationshipType_estMembreEluDe();
     $rels[$r['id']] = $r['label_a_b'];
 
@@ -259,6 +262,8 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
 
     $r = $config->getRelationshipType_estSecretaireDe();
     $rels[$r['id']] = $r['label_a_b'];
+
+    $rels[] = 'est Receveur·e de';
 
     $r = $config->getRelationshipType_estMembreInviteDe();
     $rels[$r['id']] = $r['label_a_b'];
