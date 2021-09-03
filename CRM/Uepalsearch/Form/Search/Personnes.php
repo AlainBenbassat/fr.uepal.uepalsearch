@@ -14,11 +14,13 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
     CRM_Utils_System::setTitle('Rechercher les personnnes reliés à une inspection et/ou un consistoire et/ou une paroisse');
 
     $fields = [];
-    /*
-    $fields[] = $this->addFieldRelations($form);
+
+
     $fields[] = $this->addFieldInspections($form);
     $fields[] = $this->addFieldConsistoires($form);
-    $fields[] = $this->addFieldParoisses($form);
+    /*
+     * $fields[] = $this->addFieldParoisses($form);
+     * $fields[] = $this->addFieldRelations($form);
     */
 
     $form->assign('elements', $fields);
@@ -102,6 +104,8 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
         contact_a.contact_type = 'Individual'
     ";
 
+    $where .= $this->getInspectionConsistoireParoisseFilter();
+
     return $this->whereClause($where, $params);
   }
 
@@ -112,12 +116,12 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
 
     $filter = CRM_Utils_Array::value('filter_inspection_consistoire_reforme', $this->_formValues);
     if ($filter) {
-      $where = " and pd.inspection_consistoire_reforme = $filter ";
+      $where = " and pard.inspection_consistoire_reforme = $filter ";
     }
 
     $filter = CRM_Utils_Array::value('filter_consistoire_lutherien', $this->_formValues);
     if ($filter) {
-      $where = " and pd.consistoire_lutherien = $filter ";
+      $where = " and pard.consistoire_lutherien = $filter ";
     }
 
     $filter = CRM_Utils_Array::value('filter_paroisse', $this->_formValues);
