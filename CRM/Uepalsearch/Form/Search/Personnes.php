@@ -277,6 +277,12 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
     $r = $config->getRelationshipType_estMembreInviteDe();
     $rels[$r['id']] = $r['label_a_b'];
 
+    $r = $config->getRelationshipType_estDelegueDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
+    $r = $config->getRelationshipType_estDelegueSuppleantDe();
+    $rels[$r['id']] = $r['label_a_b'];
+
     return $rels;
   }
 
