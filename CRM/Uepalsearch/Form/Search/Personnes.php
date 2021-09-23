@@ -39,6 +39,7 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
     }
 
     $columns['Courriel'] = 'e.email';
+    $columns['Téléphone'] = 'p.phone';
 
     $columns['Complément 1'] = 'a.supplemental_address_1';
     $columns['Complément 2'] = 'a.supplemental_address_2';
@@ -62,6 +63,7 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
       par.organization_name paroisse,
       contact_a.display_name as nom,
       e.email,
+      p.phone,
       a.*
     ";
 
@@ -88,6 +90,8 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
         civicrm_contact consist on consist.id = pard.consistoire_lutherien
       LEFT OUTER JOIN
         civicrm_email e ON e.contact_id = contact_a.id AND e.is_primary = 1
+      LEFT OUTER JOIN
+        civicrm_phone p ON p.contact_id = contact_a.id AND p.is_primary = 1
       LEFT OUTER JOIN
         civicrm_address a ON a.contact_id = contact_a.id AND a.is_primary = 1
     ";
@@ -267,7 +271,8 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
     $r = $config->getRelationshipType_estSecretaireDe();
     $rels[$r['id']] = $r['label_a_b'];
 
-    $rels[] = 'est Receveur·e de';
+    $r = $config->getRelationshipType_estReceveurDe();
+    $rels[$r['id']] = $r['label_a_b'];
 
     $r = $config->getRelationshipType_estMembreInviteDe();
     $rels[$r['id']] = $r['label_a_b'];
