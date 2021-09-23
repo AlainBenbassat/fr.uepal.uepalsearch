@@ -11,10 +11,9 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
   }
 
   public function buildForm(&$form) {
-    CRM_Utils_System::setTitle('Rechercher les personnnes reliés à une inspection et/ou un consistoire et/ou une paroisse');
+    CRM_Utils_System::setTitle('Rechercher les personnes reliés à une paroisse. Filtrer par inspection et/ou consistoire.');
 
     $fields = [];
-
 
     $fields[] = $this->addFieldInspections($form);
     $fields[] = $this->addFieldConsistoires($form);
@@ -112,8 +111,6 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
 
     return $this->whereClause($where, $params);
   }
-
-
 
   private function getInspectionConsistoireParoisseFilter() {
     $where = '';
