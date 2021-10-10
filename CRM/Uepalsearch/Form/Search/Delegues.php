@@ -26,7 +26,10 @@ class CRM_Uepalsearch_Form_Search_Delegues extends CRM_Contact_Form_Search_Custo
       'Organisation' => 'inspec_consist.organization_name',
       'Relation' => 'relationship_name',
       'Paroisse' => 'r.description',
-      'Nom' => 'nom',
+      'Civilité' => 'prefix',
+      'Titre officiel' => 'contact_a.formal_title',
+      'Prénom' => 'contact_a.first_name',
+      'Nom' => 'contact_a.last_name',
       'Courriel' => 'e.email',
       'Téléphone' => 'p.phone',
       'Complément 1' => 'a.supplemental_address_1',
@@ -48,7 +51,10 @@ class CRM_Uepalsearch_Form_Search_Delegues extends CRM_Contact_Form_Search_Custo
   public function select() {
     $selectColumns = "
       inspec_consist.organization_name,
-      contact_a.display_name as nom,
+      pref.label prefix,
+      contact_a.formal_title,
+      contact_a.first_name,
+      contact_a.last_name,
       rt.label_b_a relationship_name,
       r.description,
       e.email,
@@ -69,6 +75,8 @@ class CRM_Uepalsearch_Form_Search_Delegues extends CRM_Contact_Form_Search_Custo
         civicrm_relationship_type rt on rt.id = r.relationship_type_id
       INNER JOIN
         civicrm_contact inspec_consist on inspec_consist.id = r.contact_id_b
+      LEFT OUTER JOIN
+        civicrm_option_value pref on pref.value = contact_a.prefix_id and pref.option_group_id = 6
       LEFT OUTER JOIN
         civicrm_email e ON e.contact_id = contact_a.id AND e.is_primary = 1
       LEFT OUTER JOIN
