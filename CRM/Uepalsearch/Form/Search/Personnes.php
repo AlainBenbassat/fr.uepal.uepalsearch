@@ -30,7 +30,10 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
       'Inspection' => 'inspection',
       'Consistoire' => 'consistoire',
       'Paroisse' => 'paroisse',
-      'Nom' => 'nom',
+      'Civilité' => 'prefix',
+      'Titre officiel' => 'contact_a.formal_title',
+      'Prénom' => 'contact_a.first_name',
+      'Nom' => 'contact_a.last_name',
     ];
 
     foreach ($this->relTypesParoisse as $k => $v) {
@@ -60,7 +63,10 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
       inspec.organization_name inspection,
       consist.organization_name consistoire,
       par.organization_name paroisse,
-      contact_a.display_name as nom,
+      pref.label prefix,
+      contact_a.formal_title,
+      contact_a.first_name,
+      contact_a.last_name,
       e.email,
       p.phone,
       a.*
@@ -83,6 +89,8 @@ class CRM_Uepalsearch_Form_Search_Personnes extends CRM_Contact_Form_Search_Cust
         civicrm_contact par on par.id = r.contact_id_b
       INNER JOIN
         civicrm_value_paroisse_detail pard on pard.entity_id = par.id
+      LEFT OUTER JOIN
+        civicrm_option_value pref on pref.value = contact_a.prefix_id and pref.option_group_id = 6
       LEFT OUTER JOIN
         civicrm_contact inspec on inspec.id = pard.inspection_consistoire_reforme
       LEFT OUTER JOIN
