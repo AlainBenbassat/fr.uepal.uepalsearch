@@ -37,6 +37,7 @@ class CRM_Uepalsearch_Form_Search_Delegues extends CRM_Contact_Form_Search_Custo
       'Rue' => 'a.street_address',
       'CP' => 'a.postal_code',
       'Ville' => 'a.city',
+      'Redelegation' => 'redelegation',
     ];
 
     return $columns;
@@ -49,6 +50,28 @@ class CRM_Uepalsearch_Form_Search_Delegues extends CRM_Contact_Form_Search_Custo
   }
 
   public function select() {
+    $relDelegueId = $this->config->getRelationshipType_estDelegueDe()['id'];
+    $relDelegueSuppleantId = $this->config->getRelationshipType_estDelegueSuppleantDe()['id'];
+
+    $inspecOrConsist = $this->getInspectionOrConsistoireFilter();
+
+    $redelegation = "
+      select
+        group_concat(rdc.organization_name)
+      from
+        civicrm_relationship rdr
+      inner join
+        civicrm_contact rdc on rdc.id = rdr.contact_id_b
+      where
+        rdr.is_active = 1
+      and
+        rdr.contact_id_a = contact_a.id
+      and
+        rdr.relationship_type_id in ($relDelegueId, $relDelegueSuppleantId)
+      and
+        ifnull(rdc.contact_sub_type, '') = ''
+    ";
+
     $selectColumns = "
       inspec_consist.organization_name,
       pref.label prefix,
@@ -59,7 +82,8 @@ class CRM_Uepalsearch_Form_Search_Delegues extends CRM_Contact_Form_Search_Custo
       r.description,
       e.email,
       p.phone,
-      a.*
+      a.*,
+      ($redelegation) redelegation
     ";
 
     return $selectColumns;
@@ -110,6 +134,8 @@ class CRM_Uepalsearch_Form_Search_Delegues extends CRM_Contact_Form_Search_Custo
 
     return $this->whereClause($where, $params);
   }
+
+
 
   private function getInspectionOrConsistoireFilter() {
     $filter = CRM_Utils_Array::value('filter_contact_sub_type', $this->_formValues);
